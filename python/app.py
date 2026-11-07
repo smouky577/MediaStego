@@ -7,6 +7,54 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, ttk
 
+ABOUT_EN = "Donate to Dr. Baysinger. He promises to spend it on hookers and beer."
+ABOUT_BG = "Дарете на Dr. Baysinger. Той обещава да ги изхарчи за курви и бело."
+REVOLUT = "revolut.me/georgi09qc"
+BTC = (
+    "bc1qr84akpfry7sjs6759wwq722fyert9apcarpst6",
+    "bc1p6hp5q20u9t9upsjt7425wgqdrs0cr8wnnlf9atu24z92pzsnq85q62uc8e",
+)
+
+
+def show_about(root: tk.Tk) -> None:
+    window = tk.Toplevel(root)
+    window.title("About")
+    window.resizable(False, False)
+    window.transient(root)
+    frame = ttk.Frame(window, padding=16)
+    frame.pack(fill="both", expand=True)
+    ttk.Label(frame, text="About", font=("Segoe UI", 14, "bold")).pack(anchor="w")
+    ttk.Label(frame, text=ABOUT_EN, wraplength=520, justify="left").pack(anchor="w", pady=(12, 6))
+    ttk.Label(frame, text=ABOUT_BG, wraplength=520, justify="left").pack(anchor="w")
+    note = ttk.Label(frame, text="")
+
+    def copy(value: str) -> None:
+        root.clipboard_clear()
+        root.clipboard_append(value)
+        note.configure(text="Copied")
+
+    def link(title: str, value: str) -> None:
+        ttk.Label(frame, text=title, font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(14, 0))
+        label = ttk.Label(frame, text=value, cursor="hand2", wraplength=520)
+        label.pack(anchor="w", pady=(4, 0))
+        label.bind("<Button-1>", lambda _event: copy(value))
+
+    link("Revolut", REVOLUT)
+    ttk.Label(frame, text="BTC address", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(14, 0))
+    for address in BTC:
+        label = ttk.Label(frame, text=address, cursor="hand2")
+        label.pack(anchor="w", pady=(4, 0))
+        label.bind("<Button-1>", lambda _event, address=address: copy(address))
+    note.pack(anchor="w", pady=(12, 0))
+    window.update_idletasks()
+    width, height = 560, window.winfo_reqheight()
+    parent_x = root.winfo_rootx() + max(0, (root.winfo_width() - width) // 2)
+    parent_y = root.winfo_rooty() + max(0, (root.winfo_height() - height) // 2)
+    window.geometry(f"{width}x{height}+{parent_x}+{parent_y}")
+    window.grab_set()
+    window.focus_set()
+
+
 from hide import extract as extract_wav
 from hide_png import JPEG_MESSAGE, extract as extract_png
 from stego_core import StegoError
@@ -89,6 +137,10 @@ class ExtractWindow:
         frame.rowconfigure(7, weight=1)
         self.write("Тук ще се появи скритият текст.")
         self.result.configure(state="disabled")
+
+        credit = ttk.Label(frame, text="by Dr. Baysinger", cursor="hand2")
+        credit.grid(row=8, column=0, pady=(12, 0))
+        credit.bind("<Button-1>", lambda _event: show_about(self.root))
 
         self.password_box.focus_set()
         self.root.bind("<Return>", lambda _event: self.start())

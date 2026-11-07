@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -37,14 +39,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +70,7 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
     val hide by vm.hide.collectAsStateWithLifecycle()
     val extract by vm.extract.collectAsStateWithLifecycle()
     var tab by remember { mutableIntStateOf(0) }
+    var about by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val pickCover = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -97,7 +103,19 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
                 .imePadding(),
         ) {
             Column(Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
-                Text("MediaStego", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("MediaStego", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
+                    Text(
+                        "by Dr. Baysinger",
+                        color = PaperDim,
+                        fontSize = 12.sp,
+                        modifier = Modifier.clickable { about = true },
+                    )
+                }
                 Text("Скрит текст в звук или картина", color = PaperDim, fontSize = 13.sp)
             }
             WarningBanner()
@@ -156,6 +174,7 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
             }
         }
     }
+    if (about) AboutDialog { about = false }
 }
 
 private val carrierTypes = arrayOf(
@@ -176,14 +195,8 @@ private fun WarningBanner() {
             .background(androidx.compose.ui.graphics.Color(0xFF2A2116))
             .border(1.dp, AmberDeep, RoundedCornerShape(12.dp))
             .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text("Пращай резултата като файл, не като гласово или снимка.", color = Amber, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-        Text(
-            "Чатовете компресират глас и снимки. WAV и PNG трябва да стигнат байт по байт, иначе скритото изчезва.",
-            color = PaperDim,
-            fontSize = 12.sp,
-        )
     }
 }
 
@@ -371,7 +384,7 @@ private fun SecretField(value: String, enabled: Boolean, onChange: (String) -> U
         value = value,
         onValueChange = onChange,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth().height(140.dp),
+        modifier = Modifier.fillMaxWidth().height(116.dp),
         placeholder = { Text("Тайният текст", color = PaperDim) },
         colors = fieldColors(),
     )
@@ -467,6 +480,52 @@ private fun shareAsFile(context: Context, uri: Uri, mime: String) {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(chooser)
+}
+
+private const val ABOUT_EN = "Donate to Dr. Baysinger. He promises to spend it on hookers and beer."
+private const val ABOUT_BG = "Дарете на Dr. Baysinger. Той обещава да ги изхарчи за курви и бело."
+private const val REVOLUT = "revolut.me/georgi09qc"
+private val BTC = listOf(
+    "bc1qr84akpfry7sjs6759wwq722fyert9apcarpst6",
+    "bc1p6hp5q20u9t9upsjt7425wgqdrs0cr8wnnlf9atu24z92pzsnq85q62uc8e",
+)
+
+@Composable
+private fun AboutDialog(onClose: () -> Unit) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = {
+            TextButton(onClick = onClose) { Text("OK", color = Amber) }
+        },
+        title = { Text("About", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text(ABOUT_EN)
+                Text(ABOUT_BG, modifier = Modifier.padding(top = 12.dp))
+                Text("Revolut", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp))
+                CopyLine(REVOLUT, context)
+                Text("BTC address", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp))
+                BTC.forEach { CopyLine(it, context) }
+            }
+        },
+    )
+}
+
+@Composable
+private fun CopyLine(value: String, context: Context) {
+    Text(
+        value,
+        color = Amber,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("address", value))
+                Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+            }
+            .padding(vertical = 6.dp),
+    )
 }
 
 private fun copyText(context: Context, text: String) {
