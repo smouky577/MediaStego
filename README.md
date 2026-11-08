@@ -4,6 +4,24 @@
 
 Няма разпознаваеми маркери във файла. Без правилната парола съдържанието не се отличава от обикновен шум в младшия бит.
 
+## English
+
+MediaStego hides and extracts **encrypted** text or a file in the least significant bit (LSB) of a 16-bit PCM WAV or an 8-bit RGB PNG. The Python tools and the Android app use the same format.
+
+The file has no marker. Without the password the payload is indistinguishable from ordinary noise in the lowest bit. The password is required. It selects the bit positions and decrypts the message. Listening to the audio or looking at the picture does not reveal the text. Opening the same file in this program still shows nothing until the password is typed.
+
+`Извлечи.bat` is the double-click window on Windows. Pick the WAV or PNG and type the password. It **extracts** what was hidden: text appears in the window, and a non-text payload is saved next to the original file. It does not put a new message inside. Hiding is the **Скрий** screen in the phone app, or `python/hide.py` and `python/hide_png.py` with the `embed` command.
+
+Send the result as a **file / document**, never as a voice message or a chat photo. Messengers recompress voice and pictures and destroy the hidden bits. WAV is shared as `application/octet-stream`. PNG is shared as `image/png`; in a chat, still choose Document, not Photo.
+
+The ready APK is on [Releases](https://github.com/smouky577/MediaStego/releases). Download `MediaStego.apk` and open it on the phone.
+
+## Извлечи
+
+`Извлечи.bat` отваря прозорец на Windows. Избираш WAV или PNG и пишеш паролата. Той **извлича** скритото: текстът се показва в прозореца, а ако вътре е файл, записва го до оригинала.
+
+Той не слага ново съобщение вътре. Слагането става от екрана **Скрий** в приложението на телефона, или с командата `embed` на `hide.py` и `hide_png.py`.
+
 ## Свали приложението
 
 Готовият APK е в [Releases](https://github.com/smouky577/MediaStego/releases). Свали `MediaStego.apk` и го отвори на телефона. Android ще поиска разрешение за инсталиране извън магазина.
