@@ -32,6 +32,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -71,6 +72,7 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
     val extract by vm.extract.collectAsStateWithLifecycle()
     var tab by remember { mutableIntStateOf(0) }
     var about by remember { mutableStateOf(false) }
+    var english by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     val pickCover = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -92,7 +94,7 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
         if (uri != null) vm.saveExtracted(uri)
     }
     val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) vm.startVoice() else vm.showHideError("Няма достъп до микрофона")
+        if (granted) vm.startVoice() else vm.showHideError(tr(english, "Няма достъп до микрофона"))
     }
 
     Scaffold(containerColor = Ink) { padding ->
@@ -103,29 +105,41 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
                 .imePadding(),
         ) {
             Column(Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("MediaStego", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
+                Row(Modifier.fillMaxWidth()) {
+                    Text(
+                        "MediaStego",
+                        color = Amber,
+                        style = MaterialTheme.typography.headlineMedium,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f).alignByBaseline(),
+                    )
+                    LanguageFlag(
+                        english = english,
+                        onClick = { english = !english },
+                        modifier = Modifier.alignBy { it.measuredHeight },
+                    )
                     Text(
                         "by Dr. Baysinger",
                         color = PaperDim,
-                        fontSize = 12.sp,
-                        modifier = Modifier.clickable { about = true },
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        modifier = Modifier.alignByBaseline().clickable { about = true },
                     )
                 }
-                Text("Скрит текст в звук или картина", color = PaperDim, fontSize = 13.sp)
+                Text(
+                    if (english) "Hidden text in sound or a picture" else "Скрит текст в звук или картина",
+                    color = PaperDim,
+                    fontSize = 13.sp,
+                )
             }
-            WarningBanner()
+            WarningBanner(english)
             PrimaryTabRow(
                 selectedTabIndex = tab,
                 containerColor = Ink,
                 contentColor = Amber,
             ) {
-                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Скрий") })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Извлечи") })
+                Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(if (english) "Hide" else "Скрий") })
+                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(if (english) "Extract" else "Извлечи") })
             }
             Column(
                 Modifier
@@ -136,13 +150,14 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
             ) {
                 if (tab == 0) {
                     HidePane(
+                        english = english,
                         ui = hide,
                         vm = vm,
                         onPickCover = { pickCover.launch(carrierTypes) },
                         onPickFile = { pickPayload.launch(arrayOf("*/*")) },
                         onRecord = {
                             if (Build.VERSION.SDK_INT < 29) {
-                                vm.showHideError("Записът на глас работи на Android 10 и по-нов (OGG/OPUS)")
+                                vm.showHideError(tr(english, "Записът на глас работи на Android 10 и по-нов (OGG/OPUS)"))
                             } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                                 vm.startVoice()
                             } else {
@@ -155,10 +170,13 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
                             else if (hide.carrier == "PNG") createPng.launch(vm.suggestedOutputName())
                             else createWav.launch(vm.suggestedOutputName())
                         },
-                        onShare = { uri -> shareAsFile(context, uri, hide.outputMime) },
+                        onShare = { uri ->
+                            shareAsFile(context, uri, hide.outputMime, if (english) "Share as a file" else "Сподели като файл")
+                        },
                     )
                 } else {
                     ExtractPane(
+                        english = english,
                         ui = extract,
                         vm = vm,
                         onPick = { pickStego.launch(carrierTypes) },
@@ -166,7 +184,7 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
                         onShare = { uri ->
                             val name = extract.savedName.orEmpty()
                             val mime = if (name.endsWith(".png", ignoreCase = true)) "image/png" else "application/octet-stream"
-                            shareAsFile(context, uri, mime)
+                            shareAsFile(context, uri, mime, if (english) "Share as a file" else "Сподели като файл")
                         },
                         onCopy = { text -> copyText(context, text) },
                     )
@@ -186,7 +204,7 @@ private val carrierTypes = arrayOf(
 )
 
 @Composable
-private fun WarningBanner() {
+private fun WarningBanner(english: Boolean) {
     Column(
         Modifier
             .padding(horizontal = 16.dp)
@@ -196,12 +214,18 @@ private fun WarningBanner() {
             .border(1.dp, AmberDeep, RoundedCornerShape(12.dp))
             .padding(12.dp),
     ) {
-        Text("Пращай резултата като файл, не като гласово или снимка.", color = Amber, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+        Text(
+            if (english) "Send the result as a file, not as a voice note or a photo." else "Пращай резултата като файл, не като гласово или снимка.",
+            color = Amber,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+        )
     }
 }
 
 @Composable
 private fun HidePane(
+    english: Boolean,
     ui: HideUi,
     vm: StegoViewModel,
     onPickCover: () -> Unit,
@@ -210,28 +234,28 @@ private fun HidePane(
     onSave: () -> Unit,
     onShare: (Uri) -> Unit,
 ) {
-    SectionLabel("Носител")
-    GhostButton(if (ui.coverName == null) "Избери WAV или PNG" else ui.coverName, enabled = !ui.busy, onClick = onPickCover)
-    ui.coverInfo?.let { Note(it) }
+    SectionLabel(if (english) "Carrier" else "Носител")
+    GhostButton(if (ui.coverName == null) if (english) "Choose WAV or PNG" else "Избери WAV или PNG" else ui.coverName, enabled = !ui.busy, onClick = onPickCover)
+    ui.coverInfo?.let { Note(tr(english, it)) }
 
-    SectionLabel("Какво да се скрие")
+    SectionLabel(if (english) "What to hide" else "Какво да се скрие")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        ModeChip("Текст", ui.mode == PayloadMode.TEXT) { vm.setMode(PayloadMode.TEXT) }
-        ModeChip("Файл", ui.mode == PayloadMode.FILE) { vm.setMode(PayloadMode.FILE) }
-        ModeChip("Глас", ui.mode == PayloadMode.VOICE) { vm.setMode(PayloadMode.VOICE) }
+        ModeChip(if (english) "Text" else "Текст", ui.mode == PayloadMode.TEXT) { vm.setMode(PayloadMode.TEXT) }
+        ModeChip(if (english) "File" else "Файл", ui.mode == PayloadMode.FILE) { vm.setMode(PayloadMode.FILE) }
+        ModeChip(if (english) "Voice" else "Глас", ui.mode == PayloadMode.VOICE) { vm.setMode(PayloadMode.VOICE) }
     }
     when (ui.mode) {
-        PayloadMode.TEXT -> SecretField(ui.text, !ui.busy) { vm.setText(it) }
+        PayloadMode.TEXT -> SecretField(ui.text, !ui.busy, english) { vm.setText(it) }
         PayloadMode.FILE -> {
-            GhostButton(ui.fileName ?: "Избери файл", enabled = !ui.busy, onClick = onPickFile)
+            GhostButton(ui.fileName ?: if (english) "Choose a file" else "Избери файл", enabled = !ui.busy, onClick = onPickFile)
         }
-        PayloadMode.VOICE -> VoiceBlock(ui, vm, onRecord)
+        PayloadMode.VOICE -> VoiceBlock(english, ui, vm, onRecord)
     }
 
-    SectionLabel("Парола")
-    PasswordField(ui.password, ui.showPassword, !ui.busy, { vm.setHidePassword(it) }, { vm.toggleHidePassword() })
+    SectionLabel(if (english) "Password" else "Парола")
+    PasswordField(ui.password, ui.showPassword, !ui.busy, english, { vm.setHidePassword(it) }, { vm.toggleHidePassword() })
     if (ui.busy) {
-        Text(ui.progress, color = PaperDim, fontSize = 13.sp)
+        Text(tr(english, ui.progress), color = PaperDim, fontSize = 13.sp)
         LinearProgressIndicator(
             progress = { ui.progressValue },
             modifier = Modifier.fillMaxWidth(),
@@ -239,26 +263,26 @@ private fun HidePane(
             trackColor = InkHigh,
         )
     }
-    AmberButton("Скрий и запиши", enabled = !ui.busy, onClick = {
+    AmberButton(if (english) "Hide and save" else "Скрий и запиши", enabled = !ui.busy, onClick = {
         val problem = vm.hideBlocker()
         if (problem != null) vm.showHideError(problem) else onSave()
     })
-    ui.error?.let { Message(it, error = true) }
-    ui.doneMessage?.let { Message(it, error = false) }
+    ui.error?.let { Message(tr(english, it), error = true) }
+    ui.doneMessage?.let { Message(tr(english, it), error = false) }
     ui.outputUri?.let { uri ->
         Note(
             if (ui.outputMime == "image/png") {
-                "PNG се споделя като image/png. В чата избери документ, не снимка."
+                if (english) "PNG is shared as image/png. In a chat, choose a document, not a photo." else "PNG се споделя като image/png. В чата избери документ, не снимка."
             } else {
-                "WAV се споделя като файл, не като гласово съобщение."
+                if (english) "WAV is shared as a file, not as a voice message." else "WAV се споделя като файл, не като гласово съобщение."
             },
         )
-        GhostButton("Сподели", onClick = { onShare(uri) })
+        GhostButton(if (english) "Share" else "Сподели", onClick = { onShare(uri) })
     }
 }
 
 @Composable
-private fun VoiceBlock(ui: HideUi, vm: StegoViewModel, onRecord: () -> Unit) {
+private fun VoiceBlock(english: Boolean, ui: HideUi, vm: StegoViewModel, onRecord: () -> Unit) {
     val view = LocalView.current
     androidx.compose.runtime.DisposableEffect(ui.recording) {
         view.keepScreenOn = ui.recording
@@ -271,22 +295,24 @@ private fun VoiceBlock(ui: HideUi, vm: StegoViewModel, onRecord: () -> Unit) {
             delay(250)
         }
     }
-    Note("OGG/OPUS, 16 kbps, моно. Кратък запис се побира по-лесно в носителя.")
+    Note(if (english) "OGG/OPUS, 16 kbps, mono. A short recording fits in the carrier more easily." else "OGG/OPUS, 16 kbps, моно. Кратък запис се побира по-лесно в носителя.")
     if (ui.recording) {
         val seconds = ((now - ui.recordStart) / 1000).toInt().coerceAtLeast(0)
-        Text("Запис… ${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}", color = Clay, fontWeight = FontWeight.SemiBold)
-        AmberButton("Спри", onClick = vm::stopVoice)
+        val clock = "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
+        Text(if (english) "Recording… $clock" else "Запис… $clock", color = Clay, fontWeight = FontWeight.SemiBold)
+        AmberButton(if (english) "Stop" else "Спри", onClick = vm::stopVoice)
     } else {
-        AmberButton("Запиши глас", onClick = onRecord)
+        AmberButton(if (english) "Record voice" else "Запиши глас", onClick = onRecord)
         ui.voiceLabel?.let { label ->
             Note(label)
-            GhostButton("Изтрий записа", onClick = vm::clearVoice)
+            GhostButton(if (english) "Delete the recording" else "Изтрий записа", onClick = vm::clearVoice)
         }
     }
 }
 
 @Composable
 private fun ExtractPane(
+    english: Boolean,
     ui: ExtractUi,
     vm: StegoViewModel,
     onPick: () -> Unit,
@@ -295,12 +321,12 @@ private fun ExtractPane(
     onCopy: (String) -> Unit,
 ) {
     var copied by remember { mutableIntStateOf(0) }
-    SectionLabel("Носител със скрито съдържание")
-    GhostButton(ui.stegoName ?: "Избери WAV или PNG", enabled = !ui.busy, onClick = onPick)
-    SectionLabel("Парола")
-    PasswordField(ui.password, ui.showPassword, !ui.busy, { vm.setExtractPassword(it) }, { vm.toggleExtractPassword() })
+    SectionLabel(if (english) "Carrier with hidden content" else "Носител със скрито съдържание")
+    GhostButton(ui.stegoName ?: if (english) "Choose WAV or PNG" else "Избери WAV или PNG", enabled = !ui.busy, onClick = onPick)
+    SectionLabel(if (english) "Password" else "Парола")
+    PasswordField(ui.password, ui.showPassword, !ui.busy, english, { vm.setExtractPassword(it) }, { vm.toggleExtractPassword() })
     if (ui.busy) {
-        Text(ui.progress, color = PaperDim, fontSize = 13.sp)
+        Text(tr(english, ui.progress), color = PaperDim, fontSize = 13.sp)
         LinearProgressIndicator(
             progress = { ui.progressValue },
             modifier = Modifier.fillMaxWidth(),
@@ -308,10 +334,10 @@ private fun ExtractPane(
             trackColor = InkHigh,
         )
     }
-    AmberButton("Извлечи", enabled = !ui.busy, onClick = vm::extract)
-    ui.error?.let { Message(it, error = true) }
+    AmberButton(if (english) "Extract" else "Извлечи", enabled = !ui.busy, onClick = vm::extract)
+    ui.error?.let { Message(tr(english, it), error = true) }
     ui.text?.let { text ->
-        Message("Текст", error = false)
+        Message(if (english) "Text" else "Текст", error = false)
         SelectionContainer {
             Text(
                 text,
@@ -326,19 +352,19 @@ private fun ExtractPane(
                     .verticalScroll(rememberScrollState()),
             )
         }
-        GhostButton(if (copied > 0) "Копирано" else "Копирай", onClick = {
+        GhostButton(if (copied > 0) if (english) "Copied" else "Копирано" else if (english) "Copy" else "Копирай", onClick = {
             onCopy(text)
             copied += 1
         })
     }
     ui.pendingName?.let { name ->
-        Message("Файл · ${formatBytes(ui.pendingSize.toLong())}", error = false)
-        Note("Съдържанието не е текст. Запиши го като файл.")
-        AmberButton("Запиши $name", onClick = { onSave(name) })
+        Message("${if (english) "File" else "Файл"} · ${formatBytes(ui.pendingSize.toLong())}", error = false)
+        Note(if (english) "This is not text. Save it as a file." else "Съдържанието не е текст. Запиши го като файл.")
+        AmberButton(if (english) "Save $name" else "Запиши $name", onClick = { onSave(name) })
     }
     ui.savedUri?.let { uri ->
-        Note("Записано: ${ui.savedName ?: "файл"}")
-        GhostButton("Сподели", onClick = { onShare(uri) })
+        Note(if (english) "Saved: ${ui.savedName ?: "file"}" else "Записано: ${ui.savedName ?: "файл"}")
+        GhostButton(if (english) "Share" else "Сподели", onClick = { onShare(uri) })
     }
 }
 
@@ -379,13 +405,13 @@ private fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SecretField(value: String, enabled: Boolean, onChange: (String) -> Unit) {
+private fun SecretField(value: String, enabled: Boolean, english: Boolean, onChange: (String) -> Unit) {
     TextField(
         value = value,
         onValueChange = onChange,
         enabled = enabled,
         modifier = Modifier.fillMaxWidth().height(116.dp),
-        placeholder = { Text("Тайният текст", color = PaperDim) },
+        placeholder = { Text(if (english) "The secret text" else "Тайният текст", color = PaperDim) },
         colors = fieldColors(),
     )
 }
@@ -395,6 +421,7 @@ private fun PasswordField(
     value: String,
     visible: Boolean,
     enabled: Boolean,
+    english: Boolean,
     onChange: (String) -> Unit,
     onToggle: () -> Unit,
 ) {
@@ -405,10 +432,10 @@ private fun PasswordField(
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-        placeholder = { Text("Парола", color = PaperDim) },
+        placeholder = { Text(if (english) "Password" else "Парола", color = PaperDim) },
         trailingIcon = {
             Text(
-                if (visible) "Скрий" else "Покажи",
+                if (visible) if (english) "Hide" else "Скрий" else if (english) "Show" else "Покажи",
                 color = Amber,
                 fontSize = 12.sp,
                 modifier = Modifier
@@ -469,14 +496,14 @@ private fun GhostButton(text: String, enabled: Boolean = true, onClick: () -> Un
     }
 }
 
-private fun shareAsFile(context: Context, uri: Uri, mime: String) {
+private fun shareAsFile(context: Context, uri: Uri, mime: String, title: String) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = mime
         putExtra(Intent.EXTRA_STREAM, uri)
         clipData = ClipData.newRawUri("MediaStego", uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    val chooser = Intent.createChooser(send, "Сподели като файл").apply {
+        val chooser = Intent.createChooser(send, title).apply {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(chooser)
