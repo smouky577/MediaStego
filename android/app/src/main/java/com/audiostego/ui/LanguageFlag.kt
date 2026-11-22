@@ -2,7 +2,6 @@ package com.audiostego.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -10,48 +9,48 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LanguageFlag(english: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
+fun LanguageFlag(english: Boolean, onClick: () -> Unit) {
+    Canvas(
+        modifier = Modifier
             .clickable(onClick = onClick)
-            .padding(end = 8.dp)
+            .padding(vertical = 8.dp)
             .size(width = 30.dp, height = 18.dp),
     ) {
-        Canvas(Modifier.matchParentSize()) {
-            if (english) drawUnionJack() else drawBulgaria()
+        if (english) {
+            drawUnionJack()
+        } else {
+            val band = size.height / 3f
+            drawRect(Color.White, size = Size(size.width, band))
+            drawRect(Color(0xFF00966E), topLeft = Offset(0f, band), size = Size(size.width, band))
+            drawRect(Color(0xFFD62612), topLeft = Offset(0f, band * 2f), size = Size(size.width, band))
         }
+        drawRect(Color(0xFF3A4250), style = Stroke(width = 1.dp.toPx()))
     }
 }
 
-private fun DrawScope.drawBulgaria() {
-    val band = size.height / 3f
-    drawRect(Color.White, size = Size(size.width, band))
-    drawRect(Color(0xFF00966E), topLeft = Offset(0f, band), size = Size(size.width, band))
-    drawRect(Color(0xFFD62612), topLeft = Offset(0f, band * 2f), size = Size(size.width, size.height - band * 2f))
-}
-
-private fun DrawScope.drawUnionJack() {
-    val w = size.width
-    val h = size.height
-    val blue = Color(0xFF012169)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawUnionJack() {
+    val width = size.width
+    val height = size.height
+    drawRect(Color(0xFF012169))
+    val white = Color.White
     val red = Color(0xFFC8102E)
-    drawRect(blue)
-    val whiteDiag = h * 0.22f
-    val redDiag = h * 0.08f
-    drawLine(Color.White, Offset(0f, 0f), Offset(w, h), whiteDiag)
-    drawLine(Color.White, Offset(w, 0f), Offset(0f, h), whiteDiag)
-    drawLine(red, Offset(0f, redDiag), Offset(w, h), redDiag)
-    drawLine(red, Offset(w, 0f), Offset(0f, h - redDiag), redDiag)
-    val whiteCross = h * 0.36f
-    val redCross = h * 0.2f
-    drawRect(Color.White, Offset(0f, (h - whiteCross) / 2f), Size(w, whiteCross))
-    drawRect(Color.White, Offset((w - whiteCross) / 2f, 0f), Size(whiteCross, h))
-    drawRect(red, Offset(0f, (h - redCross) / 2f), Size(w, redCross))
-    drawRect(red, Offset((w - redCross) / 2f, 0f), Size(redCross, h))
+    val whiteSaltire = height * 0.22f
+    val redSaltire = height * 0.09f
+    drawLine(white, Offset(0f, 0f), Offset(width, height), whiteSaltire, StrokeCap.Butt)
+    drawLine(white, Offset(width, 0f), Offset(0f, height), whiteSaltire, StrokeCap.Butt)
+    drawLine(red, Offset(0f, 0f), Offset(width, height), redSaltire, StrokeCap.Butt)
+    drawLine(red, Offset(width, 0f), Offset(0f, height), redSaltire, StrokeCap.Butt)
+    val whiteBar = height * 0.34f
+    val redBar = height * 0.18f
+    drawRect(white, topLeft = Offset((width - whiteBar) / 2f, 0f), size = Size(whiteBar, height))
+    drawRect(white, topLeft = Offset(0f, (height - whiteBar) / 2f), size = Size(width, whiteBar))
+    drawRect(red, topLeft = Offset((width - redBar) / 2f, 0f), size = Size(redBar, height))
+    drawRect(red, topLeft = Offset(0f, (height - redBar) / 2f), size = Size(width, redBar))
 }
 
 fun tr(english: Boolean, text: String): String {

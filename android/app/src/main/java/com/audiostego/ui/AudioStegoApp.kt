@@ -105,26 +105,29 @@ fun AudioStegoApp(vm: StegoViewModel = viewModel()) {
                 .imePadding(),
         ) {
             Column(Modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
-                Row(Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
                         "MediaStego",
                         color = Amber,
                         style = MaterialTheme.typography.headlineMedium,
                         maxLines = 1,
-                        modifier = Modifier.weight(1f).alignByBaseline(),
                     )
-                    LanguageFlag(
-                        english = english,
-                        onClick = { english = !english },
-                        modifier = Modifier.alignBy { it.measuredHeight },
-                    )
-                    Text(
-                        "by Dr. Baysinger",
-                        color = PaperDim,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        modifier = Modifier.alignByBaseline().clickable { about = true },
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LanguageFlag(english = english, onClick = { english = !english })
+                        Text(
+                            "by Dr. Baysinger",
+                            color = PaperDim,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            modifier = Modifier
+                                .padding(start = 6.dp)
+                                .clickable { about = true },
+                        )
+                    }
                 }
                 Text(
                     if (english) "Hidden text in sound or a picture" else "Скрит текст в звук или картина",
@@ -522,12 +525,19 @@ private fun AboutDialog(onClose: () -> Unit) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onClose,
+        containerColor = InkRaised,
+        titleContentColor = Paper,
+        textContentColor = Paper,
         confirmButton = {
             TextButton(onClick = onClose) { Text("OK", color = Amber) }
         },
         title = { Text("About", fontWeight = FontWeight.Bold) },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 Text(ABOUT_EN)
                 Text(ABOUT_BG, modifier = Modifier.padding(top = 12.dp))
                 Text("Revolut", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 20.dp))

@@ -21,11 +21,11 @@ Viber, WhatsApp и Telegram **компресират** гласовите съо
 
 ## MediaStego на лаптопа
 
-`MediaStego.bat` отваря прозорец с два екрана, като приложението на телефона.
+Кликни два пъти върху `MediaStego.bat`. Той отваря тъмния прозорец с два екрана, като приложението на телефона.
 
-**Скрий** избира WAV или PNG, текст или файл и парола, после записва нов файл. Оригиналът не се презаписва.
+**Скрий** избира WAV или PNG, после една от трите кутии **Текст**, **Файл** или **Глас**, и парола. Резултатът се записва като нов файл. Оригиналът не се презаписва. Гласът е кратък WAV от микрофона.
 
-**Извлечи** избира готовия файл и паролата. Текстът се показва в прозореца. Ако вътре е файл, записва го до оригинала.
+**Извлечи** избира готовия файл и паролата. Текстът се показва в прозореца. Ако вътре е файл или глас, записва го до оригинала.
 
 ## Python (Windows)
 
@@ -64,7 +64,7 @@ python -m venv .venv
 - Android Studio с JDK 17+ (вграденото JBR на Studio)
 - Android SDK 37, Build-Tools 36
 - minSdk 26, Jetpack Compose, без външни крипто библиотеки
-- Пакетът остава `com.audiostego`, името на иконата е MediaStego
+- Пакетът е `com.drbaysinger.mediastego`, името на иконата е MediaStego
 
 Отвори папката `android/`. Ако `gradle.properties` сочи към друго JDK, смени `org.gradle.java.home`. `local.properties` със `sdk.dir` го създава Studio.
 
@@ -126,11 +126,11 @@ The carrier is a **16-bit PCM WAV** (mono or stereo) or an **8-bit-per-channel P
 
 ### MediaStego on the laptop
 
-`MediaStego.bat` opens a window with the same two screens as the phone app.
+Double-click `MediaStego.bat`. It opens the dark window with the same two screens as the phone app.
 
-**Скрий** picks a WAV or PNG, then text or a file and a password, and saves a new file. The original is not overwritten.
+**Hide** picks a WAV or PNG, then one of the three boxes **Text**, **File**, or **Voice**, and a password. The result is saved as a new file. The original is not overwritten. Voice is a short WAV from the microphone.
 
-**Извлечи** picks that file and the password. Text appears in the window. A non-text payload is saved next to the original.
+**Extract** picks that file and the password. Text appears in the window. A file or a voice recording is saved next to the original.
 
 ### Python (Windows)
 
@@ -169,7 +169,7 @@ Wrong password: `Грешна парола или няма съобщение`. 
 - Android Studio with JDK 17+ (Studio's bundled JBR)
 - Android SDK 37, Build-Tools 36
 - minSdk 26, Jetpack Compose, no third-party crypto libraries
-- The package stays `com.audiostego`. The launcher name is MediaStego
+- The package is `com.drbaysinger.mediastego`. The launcher name is MediaStego
 
 Open the `android/` folder. If `gradle.properties` points at another JDK, change `org.gradle.java.home`. Studio creates `local.properties` with `sdk.dir`.
 

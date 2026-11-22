@@ -16,3 +16,6 @@ android/app/src/androidTest/assets/*.bin
 android/app/src/androidTest/assets/*.png
 android/app/src/androidTest/assets/*.jpg
 android/app/src/androidTest/assets/*.rgb
+*.jks
+*.keystore
+keystore.properties
